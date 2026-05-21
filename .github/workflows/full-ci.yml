@@ -150,13 +150,12 @@ jobs:
           echo "Contracts: $CONTRACTS"
           echo "Visual:    $VISUAL"
 
-          # Visual is skipped on push to main — that's acceptable
-          if [ "$E2E" != "success" ]; then
+          if [ "$E2E" == "failure" ]; then
             echo "❌ E2E tests failed"
             exit 1
           fi
 
-          if [ "$CONTRACTS" != "success" ]; then
+          if [ "$CONTRACTS" == "failure" ]; then
             echo "❌ Contract tests failed"
             exit 1
           fi

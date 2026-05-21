@@ -7,7 +7,7 @@
  * Run this against a live instance of the Payments API in CI.
  */
 
-import { Verifier } from '@pact-foundation/pact';
+import { Verifier, VerifierOptions } from '@pact-foundation/pact';
 import path from 'path';
 
 const PAYMENTS_API_URL = process.env.PAYMENTS_API_URL || 'http://localhost:3001';
@@ -96,7 +96,7 @@ async function runProviderVerification(): Promise<void> {
     stateHandlers,
 
     // Request filter: inject auth header for all provider verification requests
-    requestFilter: (req: { headers: Record<string, string> }, _res: unknown, next: () => void) => {
+    requestFilter: (req: any, _res: any, next: () => void) => {
       req.headers['Authorization'] = `Bearer ${process.env.PROVIDER_API_TOKEN || 'test-token'}`;
       next();
     },
