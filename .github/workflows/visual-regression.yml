@@ -1,0 +1,40 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  visual:
+    name: Percy Visual Regression
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Percy visual tests
+        run: npx percy exec -- npx playwright test visual-tests/
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          BASE_URL: ${{ vars.STAGING_URL || 'http://localhost:3000' }}
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-visual-report
+          path: test-results/visual-report
+          retention-days: 7

@@ -1,0 +1,169 @@
+name: Full CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ─── Type check ──────────────────────────────────────────────────────────────
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run type-check
+
+  # ─── E2E tests (parallel browsers) ──────────────────────────────────────────
+  e2e:
+    name: E2E (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    needs: type-check
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Run Cypress (${{ matrix.browser }})
+        uses: cypress-io/github-action@v6
+        with:
+          browser: ${{ matrix.browser }}
+          wait-on: ${{ vars.CYPRESS_BASE_URL || 'http://localhost:3000' }}
+          wait-on-timeout: 60
+        env:
+          CYPRESS_BASE_URL: ${{ vars.CYPRESS_BASE_URL }}
+          STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-failure-${{ matrix.browser }}
+          path: |
+            cypress/screenshots
+            cypress/videos
+          retention-days: 7
+
+  # ─── Contract tests ───────────────────────────────────────────────────────────
+  contracts:
+    name: Contract Tests (Pact)
+    runs-on: ubuntu-latest
+    needs: type-check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run pact:consumer
+      - name: Upload pacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pact-contracts
+          path: contract-tests/pacts/
+          retention-days: 1
+      - run: npm run pact:provider
+        env:
+          PAYMENTS_API_URL: ${{ vars.PAYMENTS_API_URL }}
+          PACT_BROKER_TOKEN: ${{ secrets.PACT_BROKER_TOKEN }}
+          PROVIDER_API_TOKEN: ${{ secrets.PROVIDER_API_TOKEN }}
+          GIT_SHA: ${{ github.sha }}
+          GIT_BRANCH: ${{ github.ref_name }}
+
+  # ─── Visual regression (PR only) ─────────────────────────────────────────────
+  visual:
+    name: Visual Regression (Percy)
+    runs-on: ubuntu-latest
+    needs: type-check
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npx percy exec -- npx playwright test visual-tests/
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+          BASE_URL: ${{ vars.STAGING_URL }}
+
+  # ─── Performance gate (main branch only) ─────────────────────────────────────
+  performance:
+    name: Performance Gate (k6)
+    runs-on: ubuntu-latest
+    needs: [e2e, contracts]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update && sudo apt-get install k6
+      - run: mkdir -p k6-results
+      - run: k6 run performance-tests/checkout-load.js
+        env:
+          BASE_URL: ${{ vars.PERF_ENV_URL }}
+          API_KEY: ${{ secrets.PERF_API_KEY }}
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-results-${{ github.sha }}
+          path: k6-results/
+          retention-days: 30
+
+  # ─── Final gate ───────────────────────────────────────────────────────────────
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs: [e2e, contracts, visual]
+    if: always()
+    steps:
+      - name: Evaluate all checks
+        run: |
+          E2E="${{ needs.e2e.result }}"
+          CONTRACTS="${{ needs.contracts.result }}"
+          VISUAL="${{ needs.visual.result }}"
+
+          echo "E2E:       $E2E"
+          echo "Contracts: $CONTRACTS"
+          echo "Visual:    $VISUAL"
+
+          # Visual is skipped on push to main — that's acceptable
+          if [ "$E2E" != "success" ]; then
+            echo "❌ E2E tests failed"
+            exit 1
+          fi
+
+          if [ "$CONTRACTS" != "success" ]; then
+            echo "❌ Contract tests failed"
+            exit 1
+          fi
+
+          if [ "$VISUAL" == "failure" ]; then
+            echo "❌ Visual regression failed"
+            exit 1
+          fi
+
+          echo "✅ All CI gates passed"

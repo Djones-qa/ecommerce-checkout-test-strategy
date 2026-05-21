@@ -1,0 +1,88 @@
+name: Performance Gate
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  load-test:
+    name: k6 Load Test — Checkout
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Create results directory
+        run: mkdir -p k6-results
+
+      - name: Run checkout load test
+        run: k6 run performance-tests/checkout-load.js
+        env:
+          BASE_URL: ${{ vars.PERF_ENV_URL || 'http://localhost:3001' }}
+          API_KEY: ${{ secrets.PERF_API_KEY }}
+
+      - name: Upload k6 results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-load-results
+          path: k6-results/
+          retention-days: 30
+
+      - name: Comment results on commit
+        if: always()
+        run: |
+          if [ -f k6-results/checkout-load-summary.json ]; then
+            echo "k6 results uploaded as artifact"
+          fi
+
+  black-friday-gate:
+    name: k6 Black Friday Scenario
+    runs-on: ubuntu-latest
+    needs: load-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Create results directory
+        run: mkdir -p k6-results
+
+      - name: Run Black Friday spike test
+        run: k6 run performance-tests/scenarios/black-friday-spike.js
+        env:
+          BASE_URL: ${{ vars.PERF_ENV_URL || 'http://localhost:3001' }}
+          API_KEY: ${{ secrets.PERF_API_KEY }}
+
+      - name: Upload Black Friday results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: k6-black-friday-results
+          path: k6-results/
+          retention-days: 30

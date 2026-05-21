@@ -1,0 +1,15 @@
+node_modules/
+dist/
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+test-results/
+playwright-report/
+pact/logs/
+pact/pacts/
+contract-tests/pacts/*.json
+.env
+.env.local
+*.log
+coverage/
+k6-results/

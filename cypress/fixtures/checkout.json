@@ -1,0 +1,78 @@
+{
+  "validCard": {
+    "number": "4242424242424242",
+    "expiry": "12/28",
+    "cvv": "123",
+    "name": "Test User"
+  },
+  "declinedCard": {
+    "number": "4000000000000002",
+    "expiry": "12/28",
+    "cvv": "123",
+    "name": "Test User"
+  },
+  "insufficientFundsCard": {
+    "number": "4000000000009995",
+    "expiry": "12/28",
+    "cvv": "123",
+    "name": "Test User"
+  },
+  "expiredCard": {
+    "number": "4000000000000069",
+    "expiry": "12/28",
+    "cvv": "123",
+    "name": "Test User"
+  },
+  "networkErrorCard": {
+    "number": "4000000000000119",
+    "expiry": "12/28",
+    "cvv": "123",
+    "name": "Test User"
+  },
+  "addresses": {
+    "valid": {
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "line1": "123 Main Street",
+      "line2": "Apt 4B",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701",
+      "country": "US",
+      "phone": "5125550100"
+    },
+    "invalidZip": {
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "line1": "123 Main Street",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "ABCDE",
+      "country": "US"
+    },
+    "missingRequired": {
+      "firstName": "Jane",
+      "line1": "",
+      "city": "",
+      "state": "TX",
+      "zip": "",
+      "country": "US"
+    }
+  },
+  "shippingOptions": [
+    { "id": "standard", "label": "Standard Shipping (5-7 days)", "price": 5.99 },
+    { "id": "express", "label": "Express Shipping (2-3 days)", "price": 14.99 },
+    { "id": "overnight", "label": "Overnight Shipping", "price": 29.99 }
+  ],
+  "products": [
+    { "id": "prod_001", "name": "Wireless Headphones", "price": 79.99, "qty": 1 },
+    { "id": "prod_002", "name": "Phone Case", "price": 19.99, "qty": 2 }
+  ],
+  "guestUser": {
+    "email": "guest@example.com"
+  },
+  "authUser": {
+    "email": "testuser@example.com",
+    "password": "TestPass123!"
+  }
+}

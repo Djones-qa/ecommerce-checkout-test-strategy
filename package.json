@@ -1,0 +1,41 @@
+{
+  "name": "ecommerce-checkout-test-strategy",
+  "version": "1.0.0",
+  "description": "Comprehensive test strategy for ecommerce checkout flows — E2E, contract, visual, and performance testing with PCI-DSS risk mapping",
+  "private": true,
+  "scripts": {
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "cy:run:chrome": "cypress run --browser chrome",
+    "cy:run:firefox": "cypress run --browser firefox",
+    "cy:run:edge": "cypress run --browser edge",
+    "pact:consumer": "ts-node contract-tests/consumer/payment-consumer.pact.ts",
+    "pact:provider": "ts-node contract-tests/provider/payment-provider.pact.ts",
+    "visual:test": "playwright test visual-tests/",
+    "perf:load": "k6 run performance-tests/checkout-load.js",
+    "perf:stress": "k6 run performance-tests/checkout-stress.js",
+    "perf:blackfriday": "k6 run performance-tests/scenarios/black-friday-spike.js",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test:all": "npm run cy:run && npm run pact:consumer && npm run visual:test"
+  },
+  "dependencies": {
+    "msw": "2.3.1"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "12.3.0",
+    "@percy/cli": "1.28.8",
+    "@percy/playwright": "1.0.6",
+    "@playwright/test": "1.44.1",
+    "@types/node": "20.14.2",
+    "cypress": "13.11.0",
+    "eslint": "8.57.0",
+    "@typescript-eslint/eslint-plugin": "7.13.0",
+    "@typescript-eslint/parser": "7.13.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.4.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
