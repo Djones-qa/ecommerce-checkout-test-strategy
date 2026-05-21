@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -26,7 +25,13 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Percy visual tests
-        run: npx percy exec -- npx playwright test visual-tests/
+        run: |
+          if [ -z "$PERCY_TOKEN" ]; then
+            echo "ℹ️  PERCY_TOKEN not configured — skipping visual regression"
+            echo "   Add PERCY_TOKEN as a repository secret to enable Percy snapshots"
+            exit 0
+          fi
+          npx percy exec -- npx playwright test visual-tests/
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
           BASE_URL: ${{ vars.STAGING_URL || 'http://localhost:3000' }}

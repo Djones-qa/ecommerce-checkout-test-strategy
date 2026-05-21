@@ -34,11 +34,12 @@ jobs:
           retention-days: 1
 
       - name: Publish pacts to Pact Broker
-        # Only runs when PACT_BROKER_TOKEN secret is configured
-        if: |
-          secrets.PACT_BROKER_TOKEN != '' &&
-          (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        # Skips gracefully when broker credentials are not configured
         run: |
+          if [ -z "$PACT_BROKER_TOKEN" ] || [ -z "$PACT_BROKER_URL" ]; then
+            echo "ℹ️  PACT_BROKER_TOKEN or PACT_BROKER_URL not set — skipping publish (configure secrets to enable)"
+            exit 0
+          fi
           npx pact-broker publish contract-tests/pacts \
             --broker-base-url "$PACT_BROKER_URL" \
             --broker-token "$PACT_BROKER_TOKEN" \
@@ -73,7 +74,6 @@ jobs:
           path: contract-tests/pacts/
 
       - name: Run provider verification
-        # Uses local pact files when no broker is configured (portfolio/demo mode)
         run: npm run pact:provider
         env:
           PAYMENTS_API_URL: ${{ vars.PAYMENTS_API_URL || 'http://localhost:3001' }}
