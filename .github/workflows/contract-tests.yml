@@ -2,9 +2,9 @@ name: Contract Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 jobs:
   consumer:
@@ -35,7 +35,7 @@ jobs:
           retention-days: 1
 
       - name: Publish pacts to Pact Broker
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+        if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
         run: |
           npx pact-broker publish contract-tests/pacts \
             --broker-base-url ${{ vars.PACT_BROKER_URL }} \
@@ -85,7 +85,7 @@ jobs:
     name: Can I Deploy? (Pact Broker check)
     runs-on: ubuntu-latest
     needs: provider
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
     steps:
       - name: Check can-i-deploy

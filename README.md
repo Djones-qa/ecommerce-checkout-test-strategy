@@ -1,9 +1,9 @@
 # ecommerce-checkout-test-strategy
 
-[![E2E Tests](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/e2e.yml/badge.svg)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/e2e.yml)
-[![Contract Tests](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/contract-tests.yml/badge.svg)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/contract-tests.yml)
-[![Visual Regression](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/visual-regression.yml/badge.svg)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/visual-regression.yml)
-[![Performance Gate](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/performance.yml/badge.svg)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/performance.yml)
+[![E2E Tests](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/e2e.yml/badge.svg?branch=master)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/e2e.yml)
+[![Contract Tests](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/contract-tests.yml/badge.svg?branch=master)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/contract-tests.yml)
+[![Visual Regression](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/visual-regression.yml/badge.svg?branch=master)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/visual-regression.yml)
+[![Performance Gate](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/performance.yml/badge.svg?branch=master)](https://github.com/Djones-qa/ecommerce-checkout-test-strategy/actions/workflows/performance.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Node.js 20](https://img.shields.io/badge/node-20-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](https://www.typescriptlang.org/)

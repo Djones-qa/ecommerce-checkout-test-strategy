@@ -2,9 +2,9 @@ name: Full CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 jobs:
   # ─── Type check ──────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ jobs:
     name: Performance Gate (k6)
     runs-on: ubuntu-latest
     needs: [e2e, contracts]
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - name: Install k6

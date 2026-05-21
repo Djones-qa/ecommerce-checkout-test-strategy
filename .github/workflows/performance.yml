@@ -2,7 +2,7 @@ name: Performance Gate
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
 
 jobs:
   load-test:
