@@ -5,8 +5,8 @@ on:
     branches: [master, main]
 
 jobs:
-  load-test:
-    name: k6 Load Test — Checkout
+  validate-scripts:
+    name: Validate k6 Scripts
     runs-on: ubuntu-latest
 
     steps:
@@ -22,8 +22,38 @@ jobs:
             --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
             | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
+
+      - name: Validate k6 scripts parse correctly
+        run: |
+          k6 inspect performance-tests/checkout-load.js
+          k6 inspect performance-tests/checkout-stress.js
+          k6 inspect performance-tests/scenarios/black-friday-spike.js
+          echo "✅ All k6 scripts are valid"
+
+  load-test:
+    name: k6 Load Test — Checkout
+    runs-on: ubuntu-latest
+    needs: validate-scripts
+    # Only run full load test when a performance environment URL is configured
+    if: vars.PERF_ENV_URL != ''
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
 
       - name: Create results directory
         run: mkdir -p k6-results
@@ -31,7 +61,7 @@ jobs:
       - name: Run checkout load test
         run: k6 run performance-tests/checkout-load.js
         env:
-          BASE_URL: ${{ vars.PERF_ENV_URL || 'http://localhost:3001' }}
+          BASE_URL: ${{ vars.PERF_ENV_URL }}
           API_KEY: ${{ secrets.PERF_API_KEY }}
 
       - name: Upload k6 results
@@ -42,17 +72,11 @@ jobs:
           path: k6-results/
           retention-days: 30
 
-      - name: Comment results on commit
-        if: always()
-        run: |
-          if [ -f k6-results/checkout-load-summary.json ]; then
-            echo "k6 results uploaded as artifact"
-          fi
-
   black-friday-gate:
     name: k6 Black Friday Scenario
     runs-on: ubuntu-latest
     needs: load-test
+    if: vars.PERF_ENV_URL != ''
 
     steps:
       - name: Checkout code
@@ -67,8 +91,8 @@ jobs:
             --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
           echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
             | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
-          sudo apt-get install k6
+          sudo apt-get update -qq
+          sudo apt-get install -y k6
 
       - name: Create results directory
         run: mkdir -p k6-results
@@ -76,7 +100,7 @@ jobs:
       - name: Run Black Friday spike test
         run: k6 run performance-tests/scenarios/black-friday-spike.js
         env:
-          BASE_URL: ${{ vars.PERF_ENV_URL || 'http://localhost:3001' }}
+          BASE_URL: ${{ vars.PERF_ENV_URL }}
           API_KEY: ${{ secrets.PERF_API_KEY }}
 
       - name: Upload Black Friday results
