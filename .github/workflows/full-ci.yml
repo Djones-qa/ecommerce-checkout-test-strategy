@@ -17,7 +17,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run type-check
 
   # ─── E2E tests (parallel browsers) ──────────────────────────────────────────
@@ -35,7 +35,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm install
       - name: Run Cypress (${{ matrix.browser }})
         uses: cypress-io/github-action@v6
         with:
@@ -67,7 +67,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npm run pact:consumer
       - name: Upload pacts
         uses: actions/upload-artifact@v4
@@ -95,7 +95,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
-      - run: npm ci
+      - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: npx percy exec -- npx playwright test visual-tests/
         env:
