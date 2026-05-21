@@ -23,17 +23,26 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Run Percy visual tests
+      - name: Check Percy token
+        id: percy-check
         run: |
           if [ -z "$PERCY_TOKEN" ]; then
-            echo "ℹ️  PERCY_TOKEN not configured — skipping visual regression"
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  PERCY_TOKEN not configured — visual regression snapshots skipped"
             echo "   Add PERCY_TOKEN as a repository secret to enable Percy snapshots"
-            exit 0
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
           fi
-          npx percy exec -- npx playwright test visual-tests/
+        env:
+          PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
+
+      - name: Install Playwright browsers
+        if: steps.percy-check.outputs.configured == 'true'
+        run: npx playwright install chromium --with-deps
+
+      - name: Run Percy visual tests
+        if: steps.percy-check.outputs.configured == 'true'
+        run: npx percy exec -- npx playwright test visual-tests/
         env:
           PERCY_TOKEN: ${{ secrets.PERCY_TOKEN }}
           BASE_URL: ${{ vars.STAGING_URL || 'http://localhost:3000' }}
